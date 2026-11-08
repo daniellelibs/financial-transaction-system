@@ -1,98 +1,163 @@
 # FinPay — Financial Transaction System
 
-A backend REST API for managing financial transactions, built with Java 21 and Spring Boot. The project uses PostgreSQL for data persistence, Flyway for database schema versioning, and Stripe (test mode) for payment processing.
+A RESTful financial transaction management system built with Java and Spring Boot, featuring payment processing through Stripe, PostgreSQL persistence, API authentication, and Docker containerization.
 
-## Why This Project
+## Overview
 
-FinPay was created as a practical backend engineering project to explore the challenges involved in building financial applications.
+FinPay is a backend application designed to manage financial transactions and integrate secure payment processing workflows using Stripe.
 
-The main focus is on developing reliable APIs while practicing essential backend concepts such as data consistency, input validation, transaction management, exception handling, external API integration, and automated testing.
+The system supports transaction creation, retrieval, filtering, pagination, sorting, input validation, and payment status updates through Stripe webhooks.
+
+## Features
+
+- Create and retrieve financial transactions.
+- List transactions with pagination and sorting.
+- Filter transactions by status.
+- Validate transaction amounts and currency codes.
+- Centralized exception handling and HTTP error responses.
+- Integrate with Stripe PaymentIntents.
+- Process Stripe webhooks for successful and failed payments.
+- Track transaction statuses: `PENDING`, `COMPLETED`, `FAILED`, and `CANCELLED`.
+- Protect API endpoints with HTTP Basic Authentication.
+- Persist data using PostgreSQL.
+- Manage database schema changes with Flyway.
+- Run the application and database using Docker Compose.
+- Unit tests with JUnit and Mockito.
 
 ## Tech Stack
 
-- **Language:** Java 21
-- **Framework:** Spring Boot 4.1.2 (Spring Web MVC, Spring Data JPA, Bean Validation, Actuator)
-- **Database:** PostgreSQL 16
-- **Database Migrations:** Flyway
-- **Payment Processing:** Stripe API (test mode)
-- **Infrastructure:** Docker and Docker Compose
-- **Build Tool:** Maven
-- **Testing:** JUnit 5 and Mockito (planned)
-- **API Testing:** Postman
+| Technology | Purpose |
+|---|---|
+| Java 21 | Programming language |
+| Spring Boot 4.1.2 | Backend framework |
+| Spring Data JPA | Data persistence |
+| Spring Security | API authentication |
+| PostgreSQL 16 | Relational database |
+| Flyway | Database migrations |
+| Stripe Java SDK | Payment integration |
+| Maven | Dependency and build management |
+| JUnit and Mockito | Testing |
+| Docker and Docker Compose | Containerization |
+| Postman | API testing |
 
 ## Architecture
 
-The application follows a layered architecture to separate responsibilities and keep business logic independent from infrastructure concerns.
+The application follows a layered architecture:
 
-```text
-Client (Postman / Frontend)
-        │
-        │ HTTP / JSON
-        ▼
-Controller Layer
-        │  Handles HTTP requests,
-        │  validates input and returns responses
-        ▼
-Service Layer
-        │  Implements business rules,
-        │  transaction logic and validation
-        ▼
-Repository Layer
-        │  Handles database access
-        │  through Spring Data JPA
-        ▼
-PostgreSQL
-           Database schema managed by Flyway
+- **Controller:** Handles HTTP requests and responses.
+- **Service:** Implements business logic.
+- **Repository:** Handles database operations.
+- **Entity:** Represents persistent transaction data.
+- **DTO:** Defines API request and response structures.
+- **Integration:** Handles communication with Stripe.
+- **Config:** Contains application and security configuration.
+- **Exception:** Handles application errors.
+
+## Transaction Status Flow
+
+- `PENDING`: Transaction created and awaiting payment.
+- `COMPLETED`: Payment successfully confirmed.
+- `FAILED`: Payment failed.
+- `CANCELLED`: Transaction cancelled.
+
+Stripe webhooks are used to synchronize payment events with transaction statuses.
+
+## API Endpoints
+
+Base URL: `http://localhost:8080`
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/transactions` | Create a transaction |
+| GET | `/api/transactions` | List transactions |
+| GET | `/api/transactions/{id}` | Retrieve a transaction |
+| POST | `/api/transactions/{id}/payment` | Create a Stripe PaymentIntent |
+| POST | `/api/stripe/webhook` | Receive Stripe payment events |
+| GET | `/actuator/health` | Check application health |
+
+### Transaction Listing
+
+The listing endpoint supports filtering, pagination, and sorting.
+
+Examples:
+
+```http
+GET /api/transactions?status=PENDING
+GET /api/transactions?page=0&size=5
+GET /api/transactions?sortBy=amount&direction=asc
 ```
 
-The Stripe integration will be implemented in a separate service layer, keeping payment provider interactions isolated from the core business logic.
+### Authentication
+
+The transaction endpoints use HTTP Basic Authentication.
+
+The application health endpoint is publicly accessible. The Stripe webhook endpoint is also publicly reachable, but Stripe event signatures are verified by the application.
 
 ## Getting Started
 
 ### Prerequisites
 
-Make sure you have the following tools installed:
-
 - Java 21
+- Maven
 - Docker Desktop
-- Git
-- A Stripe account with test mode enabled (required only for payment integration)
+- A Stripe account with test-mode credentials
+- Stripe CLI
 
-### Run Locally
+### Environment Variables
 
-**1. Clone the repository**
+Create a `.env` file in the project root directory.
 
-```bash
-git clone https://github.com/YOUR_USERNAME/financial-transaction-system.git
-cd financial-transaction-system
+Use the following structure:
+
+```properties
+FINPAY_API_USER=your_api_username
+FINPAY_API_PASSWORD=your_secure_password
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_signing_secret
 ```
 
-**2. Start the database**
+Replace the placeholder values with your own credentials.
+
+**Never commit your `.env` file or publish secret keys to GitHub.**
+
+### Build the Application
+
+Run:
 
 ```bash
-docker compose up -d
+mvn clean package
 ```
 
-**3. Run the application**
+### Run with Docker Compose
 
-On Linux or macOS:
+Build and start the application and PostgreSQL database:
 
 ```bash
-./mvnw spring-boot:run
+docker compose up --build -d
 ```
 
-On Windows:
+Check container status:
 
 ```bash
-mvnw.cmd spring-boot:run
+docker compose ps
 ```
 
-**4. Check the application health**
+Check application logs:
 
-Send a GET request to:
+```bash
+docker compose logs -f app
+```
+
+The application will be available at:
 
 ```text
-http://localhost:8080/actuator/health
+http://localhost:8080
+```
+
+### Health Check
+
+```http
+GET http://localhost:8080/actuator/health
 ```
 
 Expected response:
@@ -103,77 +168,57 @@ Expected response:
 }
 ```
 
-## Configuration
+## Stripe Integration
 
-Database connection settings are configured in:
+FinPay integrates with Stripe in test mode using PaymentIntents.
 
-```text
-src/main/resources/application.properties
-```
-
-The default configuration is intended for local development.
-
-Stripe API keys must never be committed to the repository. The application will read the secret key from an environment variable.
-
-On Linux or macOS:
+To forward Stripe webhook events to the local application, run:
 
 ```bash
-export STRIPE_API_KEY=sk_test_your_key_here
+stripe listen --events payment_intent.succeeded,payment_intent.payment_failed --forward-to http://localhost:8080/api/stripe/webhook
 ```
 
-On Windows PowerShell:
+Configure the generated webhook signing secret as `STRIPE_WEBHOOK_SECRET`.
 
-```powershell
-$env:STRIPE_API_KEY="sk_test_your_key_here"
+The application handles:
+
+- `payment_intent.succeeded`
+- `payment_intent.payment_failed`
+
+The webhook updates the corresponding transaction status in PostgreSQL.
+
+## Testing
+
+Run the automated tests with:
+
+```bash
+mvn test
 ```
 
-Only Stripe test-mode credentials should be used during development.
+The project includes unit tests for transaction creation, retrieval, listing, and status filtering.
 
-## Key Engineering Concepts
+API behavior and payment workflows were also manually validated using Postman and Stripe test mode.
 
-The project focuses on practicing backend engineering principles commonly used in financial applications:
+## Database
 
-- **RESTful API Design:** Building structured HTTP endpoints and handling requests and responses.
-- **Transaction Management:** Maintaining reliable database operations.
-- **Data Consistency:** Protecting the integrity of financial records.
-- **Input Validation:** Preventing invalid data from entering the system.
-- **Exception Handling:** Returning consistent and meaningful error responses.
-- **Database Migrations:** Managing schema changes with Flyway.
-- **Payment Gateway Integration:** Communicating with external payment services.
-- **Webhook Processing:** Handling asynchronous payment events.
-- **Idempotency:** Preventing duplicate processing of transaction requests.
-- **Automated Testing:** Verifying application behavior through unit and integration tests.
+PostgreSQL stores transaction records, including:
 
-Some of these concepts are part of the development roadmap and will be implemented incrementally.
+- Transaction ID
+- Amount
+- Currency
+- Status
+- Payment reference
+- Creation timestamp
 
-## Project Status
+Flyway manages the database schema through versioned SQL migrations.
 
-| Area | Status |
-|---|---|
-| Project setup and dependencies | Done |
-| PostgreSQL with Docker Compose | Done |
-| Application health endpoint | Done |
-| Database migrations (Flyway) | In Progress |
-| Account and transaction entities | Planned |
-| Transaction REST endpoints | Planned |
-| Transaction management and validation | Planned |
-| Stripe payment integration | Planned |
-| Webhook event processing | Planned |
-| Idempotency implementation | Planned |
-| Unit and integration tests | Planned |
+## Future Improvements
 
-## Design Decisions
+- JWT-based authentication and authorization.
+- Integration and end-to-end test coverage.
+- Additional payment methods.
+- Enhanced transaction reporting and monitoring.
 
-- **Layered Architecture:** Controllers, services, and repositories have separate responsibilities, making the application easier to maintain and test.
-- **No Sensitive Card Data Storage:** Payment card information is handled by Stripe. The application will store payment references and transaction statuses rather than raw card details.
-- **Externalized Secrets:** Sensitive credentials are provided through environment variables instead of being hardcoded into the source code.
-- **Database Versioning:** Flyway migrations provide a consistent and reproducible database schema across environments.
-- **Separation of Payment Logic:** Stripe-specific operations are isolated from the core business logic to reduce coupling with the payment provider.
+## Author
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-**Disclaimer:** FinPay is an educational portfolio project. It is not a real banking application or a production payment processing system. All payment integrations are intended for Stripe test mode.
+Developed as a backend portfolio project to demonstrate Java, Spring Boot, REST API development, database integration, payment processing, automated testing, and containerization.
