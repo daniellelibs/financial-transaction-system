@@ -222,3 +222,89 @@ Flyway manages the database schema through versioned SQL migrations.
 ## Author
 
 Developed as a backend portfolio project to demonstrate Java, Spring Boot, REST API development, database integration, payment processing, automated testing, and containerization.
+
+
+
+---
+
+## Screenshots & Evidence
+
+The following screenshots demonstrate the main features and functional validation of FinPay.
+
+### 1. Transaction Management
+
+**Transaction creation — HTTP 201**
+
+![Transaction Creation](docs/screenshots/transaction-management/01-transaction-creation.png)
+
+**Transaction retrieval**
+
+![Transaction Retrieval](docs/screenshots/transaction-management/02-transaction-retrieval.png)
+
+**Input validation — HTTP 400**
+
+![Validation Error](docs/screenshots/transaction-management/03-validation-error.png)
+
+**Invalid JSON**
+
+![Invalid JSON](docs/screenshots/transaction-management/04-invalid-json.png)
+
+**Invalid currency**
+
+![Invalid Currency](docs/screenshots/transaction-management/05-invalid-currency.png)
+
+**Invalid decimal precision**
+
+![Invalid Decimal](docs/screenshots/transaction-management/06-invalid-decimal.png)
+
+**Currency normalization**
+
+![Currency Normalization](docs/screenshots/transaction-management/07-currency-normalization.png)
+
+**Transaction listing**
+
+![Transaction List](docs/screenshots/transaction-management/08-transaction-list.png)
+
+**Status filtering**
+
+![Status Filter](docs/screenshots/transaction-management/09-status-filter.png)
+
+**Pagination**
+
+![Pagination](docs/screenshots/transaction-management/10-pagination.png)
+
+**Sorting**
+
+![Sorting](docs/screenshots/transaction-management/11-sorting.png)
+
+### 2. Unit Testing
+
+**Transaction service tests**
+
+![Unit Tests](docs/screenshots/testing/unit-tests-passed.png)
+
+### 3. Stripe Payment Integration
+
+**Successful payment — COMPLETED**
+
+![Successful Payment](docs/screenshots/stripe/payment-success.png)
+
+**Failed payment — FAILED**
+
+![Failed Payment](docs/screenshots/stripe/payment-failed.png)
+
+**Webhook environment configuration**
+
+![Webhook Configuration](docs/screenshots/stripe/webhook-secret-configuration.png)
+
+### 4. Security
+
+**HTTP Basic Authentication**
+
+![Basic Authentication](docs/screenshots/security/basic-authentication.png)
+
+### 5. Docker
+
+**Application health check — UP**
+
+![Docker Health Check](docs/screenshots/docker/docker-health-check.png)
